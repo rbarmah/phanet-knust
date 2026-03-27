@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  name               String
+  email              String   @unique
+  password           String
+  role               String   @default("department_lead") // "admin" or "department_lead"
+  department         String?  // department ID from departments.ts
+  phone              String?
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  issuesCreated Issue[]      @relation("IssueCreator")
+  issuesShared  IssueShare[] @relation("SharedWith")
+}
+
+model Member {
+  id              String    @id @default(uuid())
+  firstName       String
+  lastName        String
+  phone           String?
+  email           String?
+  dateOfBirth     DateTime?
+  programme       String?
+  hostel          String?
+  yearOfStudy     String?
+  residence       String?
+  photoUrl        String?
+  department      String?   // department ID from departments.ts
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  attendance Attendance[]
+  issues     Issue[]
+}
+
+model FormLink {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  date        DateTime
+  type        String   @default("regular") // regular, allnight, special
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendance Attendance[]
+  finances   Finance[]
+}
+
+model Attendance {
+  id        String    @id @default(uuid())
+  memberId  String
+  serviceId String
+  present   Boolean   @default(false)
+  markedAt  DateTime?
+  autoMarked Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  member  Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, serviceId])
+}
+
+model Issue {
+  id          String   @id @default(uuid())
+  memberId    String
+  createdById String
+  category    String   // bereavement, prayer, health, financial, other
+  title       String
+  description String
+  shareWithAll Boolean @default(false)
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  member    Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdBy User         @relation("IssueCreator", fields: [createdById], references: [id])
+  sharedWith IssueShare[]
+}
+
+model IssueShare {
+  id           String @id @default(uuid())
+  issueId      String
+  sharedWithId String
+  createdAt    DateTime @default(now())
+
+  issue     Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  sharedWith User  @relation("SharedWith", fields: [sharedWithId], references: [id])
+
+  @@unique([issueId, sharedWithId])
+}
+
+model Finance {
+  id          String   @id @default(uuid())
+  serviceId   String
+  offering    Float    @default(0)
+  tithe       Float    @default(0)
+  otherIncome Float    @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
