@@ -85,9 +85,21 @@ export const DEPARTMENTS: Department[] = [
     canJoin: true,
   },
   {
+    id: 'shepherding-training',
+    name: 'Shepherding & Training',
+    description: 'Responsible for discipleship, mentorship, and training programs that nurture spiritual growth and develop leaders within the ministry.',
+    canJoin: true,
+  },
+  {
     id: 'heirs-of-zion',
     name: 'Heirs of Zion (Choir) KNUST',
     description: 'The musical arm of PHANET KNUST — a vibrant choir that leads worship and ministers through music at services and events.',
+    canJoin: true,
+  },
+  {
+    id: 'kumasi-technical-university',
+    name: 'Kumasi Technical University',
+    description: 'For members of PHANET from Kumasi Technical University.',
     canJoin: true,
   },
 ];

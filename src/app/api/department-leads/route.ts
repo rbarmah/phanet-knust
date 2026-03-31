@@ -81,3 +81,40 @@ export async function POST(req: NextRequest) {
     tempPassword,
   }, { status: 201 });
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const user = session.user as any;
+  if (user.role !== 'admin') {
+    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const { id } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  }
+
+  // Prevent admins from deleting themselves
+  if (id === user.id) {
+    return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
+  }
+
+  // Check the user exists
+  const targetUser = await prisma.user.findUnique({ where: { id } });
+  if (!targetUser) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  // Clean up related records
+  await prisma.issueShare.deleteMany({ where: { sharedWithId: id } });
+  await prisma.issue.deleteMany({ where: { createdById: id } });
+
+  // Delete the user
+  await prisma.user.delete({ where: { id } });
+
+  return NextResponse.json({ success: true });
+}
